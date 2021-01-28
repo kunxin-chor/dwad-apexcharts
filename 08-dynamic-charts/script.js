@@ -1,4 +1,4 @@
-var groupBy = function(data, key) {
+const groupBy = function(data, key) {
   // `data` is an array of objects, `key` is the key (or property accessor) to group by
   // reduce runs this anonymous function on each element of `data` (the `item` parameter,
   // returning the `storage` parameter at the end
@@ -26,43 +26,68 @@ const options = {
   noData: {
     text: "Loading..."
   }
-
 };
 
-const monthNames = ["January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
 ];
 
-// create the chart
-const chart = new ApexCharts(document.querySelector("#chart"), options);
-
-// render the chart
-chart.render();
-
-window.addEventListener("DOMContentLoaded", async () => {
-  let data = await loadData();
-  let earnings = data.map(function(datnum) {
+function updateChart(data, chart, searchTerms) {
+  let transformed = data.map(function(datnum) {
     return {
-      amount: datnum.payment.amount,
-      date: new Date(datnum.completed_at)
+      ...datnum,
+      completed_at: new Date(datnum.completed_at)
     };
   });
-  let filtered = earnings.filter(function(datnum) {
-    return datnum.date.getFullYear() == 2020;
+  let filtered = transformed.filter(function(datnum) {
+    return (
+      datnum.completed_at.getFullYear() == 2020 &&
+      (datnum.customer.country
+        .toLowerCase()
+        .includes(searchTerms.country.toLowerCase()) ||
+        searchTerms.country == "")
+    );
   });
-  let byMonth = filtered.map(function(datanum) {
+  let earnings = filtered.map(function(datnum) {
+    return {
+      amount: datnum.payment.amount,
+      date: datnum.completed_at
+    };
+  });
+
+  let byMonth = earnings.map(function(datanum) {
     return {
       amount: parseInt(datanum.amount),
       month: datanum.date.getMonth()
     };
   });
   let groups = groupBy(byMonth, "month");
-  let series = Object.values(groups).map(function(group, month) {
-    return {
+
+  //   let series = Object.values(groups).map(function(group, month) {
+  //     return {
+  //       x: monthNames[month],
+  //       y: group.reduce((acc, datanum) => acc + datanum.amount, 0)
+  //     };
+  //   });
+  let series = [];
+  for (let month in groups) {
+    let group = groups[month];
+    series.push({
       x: monthNames[month],
       y: group.reduce((acc, datanum) => acc + datanum.amount, 0)
-    };
-  });
+    });
+  }
   console.log(series);
 
   chart.updateSeries([
@@ -71,4 +96,28 @@ window.addEventListener("DOMContentLoaded", async () => {
       data: series
     }
   ]);
+}
+
+let data;
+let chart;
+
+window.addEventListener("DOMContentLoaded", async () => {
+  // create the chart
+  chart = new ApexCharts(document.querySelector("#chart"), options);
+  chart.render();
+  data = await loadData();
+
+  // can only update after we render
+  updateChart(data, chart, {
+    year: 2020,
+    country: ""
+  });
+});
+
+document.querySelector("#search-btn").addEventListener("click", function() {
+  let country = document.querySelector("#search-terms").value;
+  updateChart(data, chart, {
+    year: 2020,
+    country: country
+  });
 });
