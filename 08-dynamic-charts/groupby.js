@@ -1,4 +1,4 @@
-const groupBy = function(data, key) {
+const groupBy = function(data, key, initialStorage={}) {
   // `data` is an array of objects, `key` is the key (or property accessor) to group by
   // reduce runs this anonymous function on each element of `data` (the `item` parameter,
   // returning the `storage` parameter at the end
@@ -14,5 +14,5 @@ const groupBy = function(data, key) {
 
     // return the updated storage to the reduce function, which will then loop through the next
     return storage;
-  }, {}); // {} is the initial value of the storage
+  }, initialStorage); // {} is the initial value of the storage
 };

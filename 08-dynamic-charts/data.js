@@ -45,7 +45,11 @@ function transformData(data, year, country) {
   });
 
   // step 4: group by months
-  let groups = groupBy(earnings, "month");
+  let initialStorage=[];
+  for (let i=0; i < 12; i++) {
+    initialStorage[i] = [];
+  }
+  let groups = groupBy(earnings, "month", initialStorage);
 
   // step 5: convert into series
   let series = [];
